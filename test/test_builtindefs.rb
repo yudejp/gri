@@ -28,6 +28,40 @@ class TestBuiltinDEFS < Test::Unit::TestCase
     specs = DEFS.get_specs :foo
     ae ['foo', 'xx', 'yy', 'zz'], specs[:tdb]
   end
+
+  def test_interfaces_exclude_docker0_and_br
+    specs = DEFS.get_specs ''
+    assert specs[:ignore?].call({'ifDescr' => 'docker0'})
+    assert specs[:ignore?].call({'ifDescr' => 'br-1234567890ab'})
+
+    record = {
+      'ifOperStatus' => '1',
+      'ifInOctets' => '1',
+      'ifOutOctets' => '1'
+    }
+    assert specs[:exclude?].call(record.merge('ifDescr' => 'docker0'))
+    assert specs[:exclude?].call(record.merge('ifDescr' => 'br-1234567890ab'))
+  end
+
+  def test_suppress_veth_does_not_exclude_ens
+    require 'gri/plugin/suppress_veth'
+    DEFS.instance_eval {@specs = nil}
+    specs = DEFS.get_specs ''
+
+    ens = {
+      'ifDescr' => 'ens18',
+      'ifOperStatus' => '1',
+      'ifSpeed' => '0',
+      'ifInOctets' => '4111917315',
+      'ifOutOctets' => '801580196'
+    }
+    assert !specs[:exclude?].call(ens)
+
+    veth = ens.merge('ifDescr' => 'vethabc123', 'ifInOctets' => '0', 'ifOutOctets' => '0')
+    assert specs[:exclude?].call(veth)
+    assert specs[:exclude?].call(ens.merge('ifDescr' => 'docker0'))
+    assert specs[:exclude?].call(ens.merge('ifDescr' => 'br-1234567890ab'))
+  end
 end
 
 end

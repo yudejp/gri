@@ -32,13 +32,13 @@ module GRI
         'ifInNUcastPkts', 'ifOutNUcastPkts',],
       :index_key => 'ifDescr',
       :ignore? => proc {|record|
-        /(^(Loopback|Null|Async)\d+)|cef layer|atm subif/ === record['ifDescr']},
+        /(^(Loopback|Null|Async)\d+)|(^docker0$)|(^br-)|cef layer|atm subif/ === record['ifDescr']},
       :exclude? => proc {|record|
         record['ifOperStatus'].to_i != 1 or
-          record['ifSpeed'].to_i == 0 or
-          (Integer(record['ifInOctets']) == 0 and
-           Integer(record['ifOutOctets']) == 0) or
-          /(^(Loopback|Null|Async|lo)\d+)|cef layer|atm subif/ === record['ifDescr']
+          # record['ifSpeed'].to_i == 0 or
+          # (Integer(record['ifInOctets']) == 0 and
+          #  Integer(record['ifOutOctets']) == 0) or
+          /(^(Loopback|Null|Async|lo)\d+)|(^docker0$)|(^br-)|cef layer|atm subif/ === record['ifDescr']
       },
       :hidden? => proc {|record|
         /cef layer|atm subif|unrouted.VLAN/ === record['ifDescr']
