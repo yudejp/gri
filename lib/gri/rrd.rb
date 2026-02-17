@@ -1,9 +1,12 @@
 require 'open3'
+require 'thread'
 
 class RRDError < Exception; end
 
 module RRDm
   extend RRDm
+
+  @io_mutex = Mutex.new
 
   @@rrdtool_path = (Dir.glob('/usr/local/rrdtool-*/bin/rrdtool').sort.reverse +
 		  ['/usr/local/bin/rrdtool', '/usr/bin/rrdtool']).find {|path|
@@ -25,8 +28,7 @@ module RRDm
     @in.sync = true
     @out.sync = true
 
-    cmd 'version'
-    line, = read
+    line, = run 'version'
     @version, = line.scan(/^RRDtool\s+(\S+)/)[0]
   end
 
@@ -68,6 +70,13 @@ module RRDm
     cmd = args.join(' ')
     @in.print cmd, "\n"
     @last_cmd = cmd
+  end
+
+  def run(*args, out: nil)
+    @io_mutex.synchronize do
+      cmd(*args)
+      read(out)
+    end
   end
 
   def close
@@ -131,8 +140,7 @@ class RRD
     if step
       str += "--step #{step}"
     end
-    RRDm.cmd 'create', @rrdname, str, *args
-    return RRDm.read
+    RRDm.run 'create', @rrdname, str, *args
   end
   private :create
 
@@ -159,9 +167,8 @@ class RRD
   def update(*args)
     daemon = @address ? " --daemon #{@address}" : ''
     path = remove_base_dir @rrdname
-    RRDm.cmd "update#{daemon}", path.first, *args
     begin
-      str, = RRDm.read
+      str, = RRDm.run("update#{daemon}", path.first, *args)
     rescue RuntimeError => e
       if e.message =~ /last update time is (\d+)/
         last_update = $1.to_i
@@ -175,8 +182,7 @@ class RRD
           return nil
         end
         args = pargs
-        RRDm.cmd "update#{daemon}", path, *args
-        str, = RRDm.read rescue nil
+        str, = RRDm.run("update#{daemon}", path, *args) rescue nil
       else
         Log.error "#{@rrdname}: #{$!}"
       end
@@ -263,8 +269,7 @@ class RRD
     end
 
     args += misc_args
-    RRDm.cmd args
-    return RRDm.read
+    RRDm.run args
   end
 
   def fetch cf, resolution=nil, starttime=nil, endtime=nil
@@ -279,8 +284,7 @@ class RRD
     end
     args.push ['--start', starttime.to_i] if starttime
     args.push ['--end', endtime.to_i] if endtime
-    RRDm.cmd 'fetch', @rrdname, cf, *args
-    str, = RRDm.read
+    str, = RRDm.run('fetch', @rrdname, cf, *args)
     collect = []
     s = nil #XXX
     for line in str.split("\n")
@@ -305,8 +309,7 @@ class RRD
   end
 
   def tune args
-    RRDm.cmd 'tune', @rrdname, *args
-    str, = RRDm.read
+    str, = RRDm.run('tune', @rrdname, *args)
     return str.split("\n")
   end
 
@@ -316,31 +319,27 @@ class RRD
     else
       rrcmd = 'SHRINK'
     end
-    RRDm.cmd 'resize', @rrdname, num, rrcmd, deltasize.abs
-    str, = RRDm.read
+    str, = RRDm.run('resize', @rrdname, num, rrcmd, deltasize.abs)
     File.rename 'resize.rrd', @rrdname
     return str.split("\n")
   end
 
   def info
-    RRDm.cmd 'info', @rrdname
-    str, = RRDm.read
+    str, = RRDm.run('info', @rrdname)
     return str.split("\n")
   end
 
   def dump dst=nil
     tmp_path = dst || "/tmp/rrdtmp#{$$}.xml"
     open(tmp_path, 'w') {|out|
-      RRDm.cmd 'dump', @rrdname#, tmp_path
-      str, = RRDm.read out
+      str, = RRDm.run('dump', @rrdname, out: out)
     }
     return tmp_path
   end
 
   def restore src=nil
     tmp_path = src
-    RRDm.cmd 'restore', tmp_path, @rrdname
-    str, = RRDm.read
+    str, = RRDm.run('restore', tmp_path, @rrdname)
     return tmp_path
   end
 
@@ -349,8 +348,7 @@ class RRD
     endtime = endtime.to_i
     cmd = "xport#{@address ? " --daemon #{@address}" : ''}"
     args = [cmd, '--json', '--start', starttime, '--end', endtime] + misc_args
-    RRDm.cmd args
-    str, = RRDm.read
+    str, = RRDm.run(args)
     return str
   end
 
