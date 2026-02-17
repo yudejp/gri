@@ -217,10 +217,9 @@ module GRI
         args.push "-u #{total_ub} --alt-autoscale-max" if params['y'] == 'u'
         args.push "HRULE:#{total_ub}#ff0000"
       end
-      if params['title']
-        args.push "--title \"#{params['title']}\""
-      elsif (title = mk_graph_title rnames, params)
-        args.push "--title #{title}"
+      if (title = params['title'] || mk_graph_title(rnames, params))
+        title = sanitize_title(title)
+        args.push "--title \"#{title}\"" unless title.empty?
       end
 
       specs = DEFS.get_specs data_name
@@ -235,6 +234,14 @@ module GRI
       end
 
       img = rrd.graphgen stime, etime, args
+    end
+
+    def sanitize_title title
+      title.to_s.
+        gsub(/[\r\n]/, ' ').
+        gsub(/["\\]/, '').
+        gsub(/[[:cntrl:]]/, '').
+        strip[0, 200]
     end
   end
 end
