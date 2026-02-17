@@ -18,19 +18,19 @@ Choose one deployment style:
 
 1. Build and start:
 
-<pre>
+```
 docker compose build
 docker compose up -d
-</pre>
+```
 
 2. Create `/usr/local/gri/gritab` in the running container (example):
 
-<pre>
+```
 docker compose exec gri sh -lc 'cat >/usr/local/gri/gritab <<EOF
 host.example.com    ver=2c community=public
 router.example.com  ver=2c community=xxxxxxxx
 EOF'
-</pre>
+```
 
 3. Check logs:
 
@@ -96,11 +96,11 @@ gritab is a file used to specify the information collection target.
 By default, the file path is `/usr/local/gri/gritab`
 
 Example:
-<pre>
+```
 # gritab example
 host.example.com    ver=2c community=public
 router.example.com  ver=2c community=xxxxxxxx
-</pre>
+```
 
  * A line beginning with # is a comment line.
  * Each line consists of one host for which data is to be collected by GRI.
@@ -133,12 +133,12 @@ gri.conf is the settings file that determines the global operation of GRI.
 By default, the file path is `/usr/local/gri/gri.conf`.
 
 Example:
-<pre>
+```
 # gri.conf example
 root-dir    /usr/local/gri
 gritab-path /usr/local/gri/gritab
 font        DEFAULT:0:IPAPGothic
-</pre>
+```
 
 ###### Description of typical options
 
