@@ -9,21 +9,60 @@ is written in Ruby.
 
 ## Quick start guide
 
-### Requirements
+Choose one deployment style:
+
+- Docker Compose (recommended)
+- Traditional CGI setup
+
+### Run with Docker Compose (recommended)
+
+1. Build and start:
+
+<pre>
+docker compose build
+docker compose up -d
+</pre>
+
+2. Create `/usr/local/gri/gritab` in the running container (example):
+
+<pre>
+docker compose exec gri sh -lc 'cat >/usr/local/gri/gritab <<EOF
+host.example.com    ver=2c community=public
+router.example.com  ver=2c community=xxxxxxxx
+EOF'
+</pre>
+
+3. Check logs:
+
+<pre>
+docker compose logs -f gri
+</pre>
+
+4. Open grapher:
+
+<pre>
+http://localhost:9292/
+</pre>
+
+Note: the Ruby 3.1+ LTSV frozen-string workaround is already integrated in GRI. External startup patches via `RUBYOPT` are no longer required.
+
+### Traditional CGI setup
+
+#### Requirements
 
  * Unix OS
  * apache or other web server that supports cgi
  * rrdtool (1.0 or later, 1.4 later is highly recommended)
- * Ruby (1.8.7 or later, 2.0 later is highly recommended)
+ * Ruby (3.1 or later is recommended)
  * rack gem
 
-### Installation
+#### Installation
 
  1. Install rrdtool
- 2. `gem install rack`, `gem install gri --no-ri --no-rdoc`
+ 2. `gem install rack`, `gem install gri`
  3. Copy the grapher cgi script into the directory for CGI executables used by your web server (commonly named cgi-bin). (e.g. `cp -p /usr/bin/grapher /var/www/cgi-bin`)
 
-### Configuration
+#### Configuration
  1. Create an administrative user for gri, e.g. "admin"
  2. Set up the gri root directory.
 <pre>
@@ -51,7 +90,7 @@ font        DEFAULT:0:IPAPGothic
 Replace admin with the valid user that you created.
  6. visit `http://<your host>/<path to>/grapher`, e.g. `http://localhost/cgi-bin/grapher`
 
-#### gritab
+##### gritab
 
 gritab is a file used to specify the information collection target.
 By default, the file path is `/usr/local/gri/gritab`
@@ -68,7 +107,7 @@ router.example.com  ver=2c community=xxxxxxxx
  * The hosts can be specified in any order. They are SNMP-polled in the order specified.
  * A host name can be followed by multiple options, each of which is separated by a space. When no option is specified, the default value is assumed.
 
-##### Description of typical options
+###### Description of typical options
 
 To disable (turn off) any of these options, specify `no-` at the beginning (example: `no-interfaces` stops collecting the interfaces MIB).
 
@@ -88,7 +127,7 @@ To disable (turn off) any of these options, specify `no-` at the beginning (exam
 
   Specifies the snmp version supported by the agent. Available versions are "1" and "2c".
 
-#### gri.conf
+##### gri.conf
 
 gri.conf is the settings file that determines the global operation of GRI.
 By default, the file path is `/usr/local/gri/gri.conf`.
@@ -101,7 +140,7 @@ gritab-path /usr/local/gri/gritab
 font        DEFAULT:0:IPAPGothic
 </pre>
 
-##### Description of typical options
+###### Description of typical options
 
 * root-dir *path*
 
@@ -131,7 +170,7 @@ font        DEFAULT:0:IPAPGothic
 
   Option to be added to the default when the host name matches PAT (regexp). Multiple options can be specified.
 
-### Operations
+#### Operations
 
  * trad: in-service acl-permit update
    * send SIGUSR1 to trad
