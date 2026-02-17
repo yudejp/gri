@@ -88,7 +88,14 @@ module GRI
     end
 
     def render template, b=nil
-      ERB.new(template, nil, '-').result(b || binding)
+      erb = if ERB.instance_method(:initialize).parameters.any? {|type, name|
+          type == :key && name == :trim_mode
+        }
+        ERB.new(template, trim_mode: '-')
+      else
+        ERB.new(template, nil, '-')
+      end
+      erb.result(b || binding)
     end
 
     def to_scalestr v, base=1000
