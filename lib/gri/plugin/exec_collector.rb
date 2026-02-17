@@ -1,6 +1,7 @@
 if Object.const_defined? :RUBY_VERSION
 
 require 'open3'
+require 'shellwords'
 require 'gri/collector'
 
 module GRI
@@ -35,7 +36,21 @@ module GRI
     end
 
     def popen cmd
-      Open3.popen3 cmd
+      cmd = cmd.to_s
+      raise ArgumentError, 'cmd is empty' if cmd.blank?
+      if cmd =~ /[\x00\r\n]/
+        raise ArgumentError, 'cmd contains invalid control characters'
+      end
+
+      if shell_command?(cmd)
+        Open3.popen3 cmd
+      else
+        Open3.popen3(*Shellwords.split(cmd))
+      end
+    end
+
+    def shell_command? cmd
+      !!(cmd =~ /[|&;<>()`$*?{}\[\]!~]/)
     end
 
     def on_readable io=nil
