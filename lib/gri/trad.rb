@@ -2,6 +2,12 @@ require 'gri/ldb'
 
 module GRI
   class Trad
+    DATA_NAME_RE = /\A[-A-Za-z0-9.]+\z/
+    MAX_QUERY_STRING_SIZE = 8192
+    MAX_PARAM_COUNT = 200
+    MAX_KEY_SIZE = 128
+    MAX_VALUE_SIZE = 2048
+
     def initialize
       @acls = nil
       @tra_dir = nil
@@ -44,8 +50,9 @@ module GRI
 
       if path_info =~ /\A\/get\b/ #/
         s = params['s']
-        dir = "#{tra_dir}/#{params['h']}"
-        if File.directory?(dir)
+        return [400, {}, ['Bad Request']] unless valid_data_name?(s)
+        dir = safe_subdir(tra_dir, params['h'])
+        if dir and File.directory?(dir)
           t = Time.at(params['t'].to_i)
           pos = params['pos'].to_i
           ldb = LocalLDB.new dir
@@ -62,9 +69,11 @@ module GRI
           headers['X-GRI-Pos'] = pos.to_s
         end
       elsif path_info =~ /\A\/get_data_names\b/ #/
-        dir = "#{tra_dir}/#{params['h']}"
-        ldb = LocalLDB.new dir
-        ldb.get_data_names.each {|k, v| body.push "#{k}_#{v}\n"}
+        dir = safe_subdir(tra_dir, params['h'])
+        if dir
+          ldb = LocalLDB.new dir
+          ldb.get_data_names.each {|k, v| body.push "#{k}_#{v}\n"}
+        end
       elsif path_info =~ /\A\/gritab\b/ #/
         gritab_path = Config['gritab-path'] || @root_dir + '/gritab'
         if File.exist? gritab_path
@@ -77,6 +86,31 @@ module GRI
         end
       end
       [200, headers, body]
+    end
+
+    def valid_data_name? name
+      name.to_s =~ DATA_NAME_RE
+    end
+
+    def parse_query qs, params
+      qstr = (qs || '').to_s
+      qstr = qstr.byteslice(0, MAX_QUERY_STRING_SIZE) if qstr.bytesize > MAX_QUERY_STRING_SIZE
+      qstr.split(/[&;] */n, MAX_PARAM_COUNT + 1).first(MAX_PARAM_COUNT).each {|item|
+        k, v = item.split('=', 2)
+        k = k.to_s
+        next if k.empty? || k.bytesize > MAX_KEY_SIZE
+        v = v.to_s
+        v = v.byteslice(0, MAX_VALUE_SIZE) if v.bytesize > MAX_VALUE_SIZE
+        params[k] = v
+      }
+    end
+
+    def safe_subdir base_dir, name
+      return nil if name.blank?
+      base = File.expand_path(base_dir.to_s)
+      path = File.expand_path(File.join(base, name.to_s))
+      return nil unless path.start_with?(base + '/')
+      path
     end
 
     def run options={}
@@ -147,10 +181,7 @@ module GRI
                 pi = $1
                 qs = $2
                 params.clear
-                (qs || '').split(/[&;] */n).each {|item|
-                  k, v = item.split('=', 2)
-                  params[k] = v
-                }
+                parse_query qs, params
                 puts "#{io.object_id}: serve #{pi} #{params.inspect}" if $debug
                 code, h, body = serve @tra_dir, pi, params
                 h.each {|k, v| io.puts "#{k}: #{v}"}
