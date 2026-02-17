@@ -215,11 +215,11 @@ module GRI
 <% if params['grp'] then %><%= hidden 'grp', params['grp'] %><% end %>
 <% tzs = TZS -%>
 <% (tzs.assoc(params['tz']) || tzs[0])[2] = true -%>
-TIMEZONE: <%= popup_menu('tz', nil, *tzs) %>
+タイムゾーン: <%= popup_menu('tz', nil, *tzs) %>
 <% nflag, uflag = (params['y'] == 'u') ? [false, true] : [true, false] -%>
-Y-axis scale:
-<%= radio_button 'y', 'a', nflag %>auto
-<%= radio_button 'y', 'u', uflag %>upper limit<br/>
+Y 軸のスケール:
+<%= radio_button 'y', 'a', nflag %>自動
+<%= radio_button 'y', 'u', uflag %>値上限<br/>
 <%= check_box 'pt', 's', (params['pt'] == 's') %>
 <nobr>
 from <%= text_field 'cs', cs, 20, 19, nil %>
@@ -227,17 +227,17 @@ to <%= text_field 'ce', ce, 20, 19, nil %>
 </nobr>
 <% zs = [['ss', 'SS'], ['s', 'S'], ['m', 'M'], ['l', 'L'], ['ll', 'LL']] -%>
 <% (zs.assoc(params['z']) || zs[2])[2] = true -%>
-Graph size: <%= popup_menu('z', nil, *zs) %>
+グラフの大きさ: <%= popup_menu('z', nil, *zs) %>
 <% tms = defs_term.sort_by {|k, v| v[0][1]}.map {|k,| [k.to_s, k.to_s]} -%>
 <% (tms.assoc(params['tm']) || tms[1])[2] = true -%>
-term: <%= popup_menu('tm', nil, *tms) %>
+グラフの長さ: <%= popup_menu('tm', nil, *tms) %>
 <br/>
 <% if rs.size > 1 or grp -%>
 <% c_ary = [['', 'sum'], ['s', 'stack'], ['v', 'overlay'], ['t', 'tile']] -%>
 <% (c_ary.assoc(params['p']) || c_ary[0])[2] = true -%>
 Composite type: <%= popup_menu('p', nil, *c_ary) %><br/>
 <% end -%>
-<input class="btn btn-primary btn-sm" type="submit" value="submit">
+<input class="btn btn-primary btn-sm" type="submit" value="表示する">
 </form>
 
 <% if params['pt'] == 's' -%>
@@ -245,7 +245,7 @@ Composite type: <%= popup_menu('p', nil, *c_ary) %><br/>
 <% else -%>
 <% for label, int in terms -%>
 <hr/><p>
-<strong><%=h label %> Graph</strong><br/>
+<strong><%=h label %> グラフ</strong><br/>
 <%= mk_graph_tag -int, 0, rs, params %>
 </p>
 <% end -%>

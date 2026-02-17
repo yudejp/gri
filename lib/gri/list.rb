@@ -185,10 +185,10 @@ module GRI
 <form enctype="application/x-www-form-urlencoded" method="get"
     action="<%=h url_to '' %>">
 <table>
-  <% for hname, vname in [['Hostname', 'h'], #['sysName', 'sysname'],
+  <% for hname, vname in [['Host', 'h'], #['sysName', 'sysname'],
       ['sysDescr', 'sysdescr'], ['I/F or Name', 'n'], ['Description', 'd'],] -%>
     <tr>
-      <td class=text-right><%= hname %> :</td>
+      <td class=text-right><%= hname %>: </td>
       <td><%= text_field vname, params[vname], 40 %></td>
     </tr>
   <% end -%>
@@ -203,7 +203,7 @@ module GRI
 </table>
 <input type="hidden" name="start" value="<%=h params['start'] %>">
 <input type="hidden" name="search" value="1">
-<input class="btn btn-primary btn-sm" type="submit" value="submit">
+<input class="btn btn-primary btn-sm" type="submit" value="表示する">
 </form>
 
 <% if params['n'].present? or params['d'].present? -%>
@@ -217,7 +217,7 @@ module GRI
 <% end -%>
 
 <% else -%>
-<a href="<%= url_to '?search=1'%>">Search</a>
+<a href="<%= url_to '?search=1'%>">メトリクスの検索</a>
 <% end -%>
 
 <pre>

@@ -76,7 +76,7 @@ module GRI
       "<a href=\"#{u}&cs=#{Rack::Utils.escape cs}\">#{img}</a>"
     end
 
-    CMNAME = {'s'=>'stack', 'v'=>'overlay', ''=>'sum', 't'=>'tile'}
+    CMNAME = {'s'=>'スタック', 'v'=>'オーバーレイ', ''=>'合計', 't'=>'タイル'}
     def mk_comp_links comps, host, ckeys, aparam
       links = []
       for cm in comps

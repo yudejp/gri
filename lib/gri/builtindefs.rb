@@ -59,7 +59,7 @@ module GRI
       :prop=>{:name=>'ifDescr', :description=>'ifAlias',
         :ostatus=>'ifOperStatus', :astatus=>'ifAdminStatus',
         :ipaddr=>'ipaddr', :ub=>'ifSpeed',},
-      :list=>['Status,Interface,Description,IP Address', '%S,%N,%D,%I'],
+      :list=>['状態,インターフェース,説明,IP アドレス', '%S,%N,%D,%I'],
       :graph=>[['bps', 1000, [0, nil], /Octets/],
         ['pps', 1000, [0, nil], /N?UcastPkts/],
         ['packets/5min', 1000, [0, nil], /Error|Discard/]], #/
@@ -164,7 +164,7 @@ module GRI
       :ds=>['hrSystemNumUsers,users,GAUGE,MAX,LINE1,#ff4020,users'],
       :prop=>{:name=>'users', :lastvalue=>'hrSystemNumUsers'},
       :graph=>[['"users"', 0]],
-      :list=>['Users', '%N, %L\r'],
+      :list=>['ユーザ', '%N, %L\r'],
     },
 
     'hrStorage'=>{
