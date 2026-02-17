@@ -6,7 +6,7 @@ module LTSV
   end
 
   def escape19 s
-    s.to_s.force_encoding(Encoding::ASCII_8BIT).
+    s.to_s.dup.force_encoding(Encoding::ASCII_8BIT).
       gsub(/\n/, "\\n").gsub(/\r/, "\\r").gsub(/\t/, "\\t")
   end
 

@@ -8,6 +8,7 @@ class TestLTSV < Test::Unit::TestCase
   def test_ltsv_escape
     ae 'a\tb', LTSV.escape("a\tb")
     ae 'a\n\r\tb', LTSV.escape("a\n\r\tb")
+    ae '', LTSV.escape(nil)
   end
 
   def test_ltsv_serialize
