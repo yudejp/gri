@@ -1,8 +1,0 @@
-image: drone:gri
-env:
-  - TZ=Asia/Tokyo
-  - HOME=/
-script:
-  - source /etc/profile.d/rbenv.sh; rbenv global 2.1
-  - bundle install
-  - bundle exec rake test
