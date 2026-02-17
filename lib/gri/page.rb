@@ -192,7 +192,7 @@ module GRI
       sym = params['tm'].blank? ? '' : params['tm'].intern
       terms = defs_term[sym] || defs_term[:default]
       body = render(Grapher.layout) {render template, binding}
-      [200, {'Content-type' => 'text/html'}, [body]]
+      [200, {'Content-type' => 'text/html; charset=utf-8'}, [body]]
     end
 
     TZS = [['', 'localtime'], ['JST-9', 'JST-9'],

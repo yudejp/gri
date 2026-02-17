@@ -67,7 +67,7 @@ module GRI
 
       @title = 'list'
       body = render(Grapher.layout) {render template, binding}
-      [200, {'Content-type' => 'text/html'}, [body]]
+      [200, {'Content-type' => 'text/html; charset=utf-8'}, [body]]
     end
 
     def load_sysdb dirs
