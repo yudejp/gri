@@ -139,13 +139,13 @@ module GRI
         linkflag = $5
         case $6
         when 'H'
-          s = form % hostname
+          s = form % h(hostname.to_s)
         when 'L'
-          s = form % sysinfo['sysLocation']
+          s = form % h(sysinfo['sysLocation'].to_s)
         when 'M'
-          s = form % sysinfo['_firm']
+          s = form % h(sysinfo['_firm'].to_s)
         when 'N'
-          s = form % sysinfo['sysName']
+          s = form % h(sysinfo['sysName'].to_s)
         when 'S'
           mtime = sysinfo['_mtime'].to_i
           if mtime > (now - 3600)
@@ -162,13 +162,13 @@ module GRI
           end
           s = form % ustr
         when 'V'
-          s = form % sysinfo['_ver']
+          s = form % h(sysinfo['_ver'].to_s)
         else
           s = ''
         end
         if linkflag == '_'
           ss = s.strip
-          s = "<a href=\"#{h url_to(basename)}\">#{h ss}</a>" +
+          s = "<a href=\"#{h url_to(basename)}\">#{ss}</a>" +
             ' ' * (s.size - ss.size)
         end
         s
@@ -226,7 +226,7 @@ module GRI
 <% if gres -%>
 <% for data_name, h2, key, name, description in gres -%>
 <% url = "?r=#{h2}_#{key}" + (params['grp'] ? "&grp=#{params['grp']}" : "") -%>
- - <a href="<%=h url_to(url) %>"><%=h name %></a> <%= description %>
+ - <a href="<%=h url_to(url) %>"><%=h name %></a> <%= h description %>
 <% unless (ly = params['ly'].to_i).zero? -%>
 <img src="<%=h url%>&z=s&stime=-<%= ly * 24 * 3600 %>"/><br/>
 <% end -%>

@@ -107,21 +107,21 @@ module GRI
       str = f.gsub(/%([\.\/a-z\d][\.\/A-Za-z_\d]*)?([%A-Z])/) {
         case $2
         when 'D'
-          prop[:description]
+          h(prop[:description].to_s)
         when 'N'
-          name = prop[:name]
-          (href = options[:href]) ? "<a href=\"#{h href}\">#{h name}</a>" : name
+          name = prop[:name].to_s
+          (href = options[:href]) ? "<a href=\"#{h href}\">#{h name}</a>" : h(name)
         when 'I'
           addrs = (prop[:ipaddr] || '').split(',').map {|item|
             if item =~ %r{^(\d+\.\d+\.\d+\.\d+)/(\d+\.\d+\.\d+\.\d+)}
               ipaddr = $1
               int, = $2.split('.').map {|s|s.to_i}.pack('C4').unpack('N')
               mask = 32 - Integer(Math.log((int ^ 0xffffffff) + 1) / Math.log(2))
-              ipaddr + '/' + mask.to_s
+              h(ipaddr + '/' + mask.to_s)
             else
-              item
+              h(item)
             end
-          }.join('</br>')
+          }.join('<br/>')
         when 'L'
           if $1
             base, mag = $1.split('/')
