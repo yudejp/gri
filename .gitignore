@@ -5,3 +5,5 @@ test/.t
 coverage/
 pkg/
 tmp/
+vendor
+.bundle
