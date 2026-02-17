@@ -1,0 +1,7 @@
+.git
+.gitignore
+.github
+vendor/bundle
+*.gem
+tmp
+log
