@@ -58,7 +58,11 @@ module GRI
       else
         str = open(url).read
       end
-      obj = YAML.load str
+      obj = begin
+        YAML.safe_load(str, permitted_classes: [Time], aliases: true)
+      rescue ArgumentError
+        YAML.safe_load(str, [Time], [], true)
+      end
       obj
     end
 
