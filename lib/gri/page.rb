@@ -222,8 +222,8 @@ Y 軸のスケール:
 <%= radio_button 'y', 'u', uflag %>値上限<br/>
 <%= check_box 'pt', 's', (params['pt'] == 's') %>
 <nobr>
-from <%= text_field 'cs', cs, 20, 19, nil %>
-to <%= text_field 'ce', ce, 20, 19, nil %>
+<%= text_field 'cs', cs, 20, 19, nil %>
+から <%= text_field 'ce', ce, 20, 19, nil %> まで
 </nobr>
 <% zs = [['ss', 'SS'], ['s', 'S'], ['m', 'M'], ['l', 'L'], ['ll', 'LL']] -%>
 <% (zs.assoc(params['z']) || zs[2])[2] = true -%>
