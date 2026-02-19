@@ -62,6 +62,23 @@ class TestBuiltinDEFS < Test::Unit::TestCase
     assert specs[:exclude?].call(ens.merge('ifDescr' => 'docker0'))
     assert specs[:exclude?].call(ens.merge('ifDescr' => 'br-1234567890ab'))
   end
+
+  def test_suppress_veth_handles_nil_octets
+    require 'gri/plugin/suppress_veth'
+    DEFS.instance_eval {@specs = nil}
+    specs = DEFS.get_specs ''
+
+    record = {
+      'ifDescr' => 'ens18',
+      'ifOperStatus' => '1',
+      'ifSpeed' => '1000000000',
+      'ifInOctets' => nil,
+      'ifOutOctets' => nil
+    }
+
+    assert_nothing_raised { specs[:exclude?].call(record) }
+    assert !specs[:exclude?].call(record)
+  end
 end
 
 end
