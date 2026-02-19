@@ -4,8 +4,10 @@ module GRI
     def layout
       <<EOS
 <!DOCTYPE html>
-<html>
+<html lang="ja">
 <head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title><%= @title %></title>
 <style>
 span.large {font-size: x-large;}
@@ -16,27 +18,12 @@ background:linear-gradient(to bottom, #ffd8d8 0%,#ffcccc 45%,#ffc0c0 100%);
 text-align:left;}
 hr {border:none;border-top:1px #cccccc solid;}
 </style>
-<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap.min.css">
-<link rel="stylesheet" href="//netdna.bootstrapcdn.com/bootstrap/3.1.0/css/bootstrap-theme.min.css">
 </head>
 
 <body>
 
-<div class="navbar navbar-static-top navbar-inverse">
-  <div class="container">
-    <div class="navbar-header">
-      <a class="navbar-brand" href="<%= url_to ''%>">GRI</a>
-    </div>
-  </div>
-</div>
-
-<div class="container">
 <%= yield %>
-</div>
 
-<script src="https://ajax.googleapis.com/ajax/libs/jquery/1.11.0/jquery.min.js">
-</script>
-<script src="//netdna.bootstrapcdn.com/bootstrap/3.1.0/js/bootstrap.min.js"></script>
 </body>
 </html>
 EOS

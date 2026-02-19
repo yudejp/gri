@@ -220,7 +220,7 @@ module GRI
 <a href="<%= url_to '?search=1'%>">メトリクスの検索</a>
 <% end -%>
 
-<pre>
+<pre style="font-size: 110%">
 <% for host, line, gres in sysdb_list dirs, sysdb, params -%>
 <span class="line"><%= line %></span>
 <% if gres -%>
