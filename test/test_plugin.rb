@@ -31,6 +31,7 @@ require 'gri/builtindefs'
 require 'gri/vendor'
 require 'gri/polling_unit'
 require 'gri/plugin/ucdavis'
+require 'gri/plugin/suppress_veth'
 
   DATA = [
     ["+\x06\x01\x04\x01\x8Fe\t\x01\x01\x01", 2, 1],
@@ -56,6 +57,16 @@ require 'gri/plugin/ucdavis'
     pu.fix_workhash :disk=>wh
     ae 40000000*1024, h['dskTotal']
     ae 9000000*1024, h['dskUsed']
+  end
+
+  def test_plugin_suppress_veth_host_specific_interface
+    proc = GRI::DEFS.get_specs('interfaces')[:ignore?]
+
+    refute proc.call({'_host'=>'sdj1gw1.sdj1.yude.jp', 'ifDescr'=>'LAN1/5'})
+    assert proc.call({'_host'=>'sdj1gw1.sdj1.yude.jp', 'ifDescr'=>'LAN1/6'})
+
+    assert proc.call({'_host'=>'other.example.jp', 'ifDescr'=>'Loopback0'})
+    refute proc.call({'_host'=>'other.example.jp', 'ifDescr'=>'LAN1/6'})
   end
 end
 

@@ -1,6 +1,10 @@
 GRI::DEFS['interfaces'].update :ignore? => proc {|record|
+  if record['_host'].to_s == 'sdj1gw1.sdj1.yude.jp'
+    record['ifDescr'].to_s != 'LAN1/5'
+  else
   /(^(|Loopback|Null|Async)\d+)|(^veth\w)|(^docker0$)|(^br-)|cef layer|atm subif/ ===
     record['ifDescr']
+  end
 },
   :exclude? => proc {|record|
   ifdescr = record['ifDescr'].to_s
