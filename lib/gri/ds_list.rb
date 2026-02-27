@@ -62,6 +62,7 @@ module GRI
       hdstr, pat = specs[:list] || specs[:list_text]
       hds = (Array === hdstr) ? hdstr : hdstr.split(',')
       formats = (pat || '%N').split(',')
+      hds, formats = filter_list_columns host, data_name, hds, formats
 
       p0 = ((hds.size == formats.size) ?
             [hds.map {|hd| td(h(hd), :head=>true)}] :
@@ -78,6 +79,21 @@ module GRI
         p1.push [td(links.join(' | '), :colspan=>formats.size)]
       end
       p0 + p1
+    end
+
+    def filter_list_columns host, data_name, hds, formats
+      return [hds, formats] unless host == 'sdj1gw1.sdj1.yude.jp'
+
+      indices = formats.each_index.select {|i| formats[i] == '%I'}
+      return [hds, formats] if indices.empty?
+
+      hds2 = hds.dup
+      formats2 = formats.dup
+      indices.reverse_each do |i|
+        formats2.delete_at i
+        hds2.delete_at i if hds2.size == formats.size
+      end
+      [hds2, formats2]
     end
 
     CMNAME = {'s'=>'stack', 'v'=>'overlay', ''=>'sum', 't'=>'tile'}

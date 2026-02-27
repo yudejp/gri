@@ -43,6 +43,20 @@ class TestDSList < Test::Unit::TestCase
     ae 2, res.size
     ae "<a href=\"?p=s&amp;r=testhost__eth0&amp;r=testhost__eth1\">stack</a>", res.first
   end
+
+  def test_ds_list_filter_list_columns_for_specific_host
+    dlist = DSList.new
+    hds = ['状態', 'インターフェース', '説明', 'IP アドレス']
+    formats = ['%S', '%N', '%D', '%I']
+
+    h2, f2 = dlist.filter_list_columns 'sdj1gw1.sdj1.yude.jp', '', hds, formats
+    ae ['状態', 'インターフェース', '説明'], h2
+    ae ['%S', '%N', '%D'], f2
+
+    h3, f3 = dlist.filter_list_columns 'other.example.jp', '', hds, formats
+    ae hds, h3
+    ae formats, f3
+  end
 end
 
 end
