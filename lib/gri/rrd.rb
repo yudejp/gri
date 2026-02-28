@@ -10,7 +10,8 @@ module RRDm
 
   @@rrdtool_path = (Dir.glob('/usr/local/rrdtool-*/bin/rrdtool').sort.reverse +
 		  ['/usr/local/bin/rrdtool', '/usr/bin/rrdtool']).find {|path|
-    File.executable? path.untaint
+    path = path.untaint if path.respond_to?(:untaint)
+    File.executable? path
   }
 
   attr_reader :version

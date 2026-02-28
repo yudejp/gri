@@ -10,7 +10,7 @@ module GRI
 
     def load_plugin_dir dir, config=nil
       dir = File.expand_path dir
-      return unless File.exists? dir
+      return unless File.exist? dir
       files = get_plugin_files dir, config
       files.each {|fname|
         unless @loaded[fname]
