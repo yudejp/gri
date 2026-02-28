@@ -422,7 +422,7 @@ class SNMP
   RECV_SIZE = 2000
 
   attr_reader :sock
-  attr_accessor :state, :numeric
+  attr_accessor :state, :numeric, :bulk_unavailable
 
   def self.add_oid sym, oid
     OIDS[sym] = oid
@@ -448,6 +448,7 @@ class SNMP
     @community = "\x04\x06public"
     @numeric = false
     @state = :IDLE
+    @bulk_unavailable = false
     @sock = nil
   end
 
@@ -514,8 +515,15 @@ class SNMP
 
   def walk_start enoid, &cb
     @req_enoid = enoid
+    @last_enoid = nil
     @cb = cb
-    @state = (@ver == "\002\001\001") ? :GETBULK_REQ : :GETNEXT_REQ
+    @state = (@ver == "\002\001\001" and !@bulk_unavailable) ?
+      :GETBULK_REQ : :GETNEXT_REQ
+  end
+
+  def enoid_non_increasing?(cur)
+    return false unless @last_enoid
+    (BER.dec_oid(cur) <=> BER.dec_oid(@last_enoid)) <= 0
   end
 
   def _walk enoid, &cb
@@ -562,12 +570,19 @@ class SNMP
         if (a = IO.select([@sock], nil, nil, @timeout))
           msg = @sock.recv RECV_SIZE, 0
           arg = recv_msg msg
+          break if @state == :SUCCESS or @state == :IDLE
           if arg
             @state = :SUCCESS if @state == :GET_REQ
             break
           end
         else
           if (@retry_count += 1) >= @retries
+            if @state == :GETBULK_REQ
+              @bulk_unavailable = true
+              @state = :GETNEXT_REQ
+              @retry_count = 0
+              break
+            end
             @state = :IDLE
             return
           end
@@ -589,14 +604,21 @@ class SNMP
       @state = :SUCCESS
       return
     end
+    enoid = nil
     for var in vars
-      if (var[1] != 130) and var[0].index(@req_enoid) #130=endOfMibView
+      if (var[1] != 130) and var[0].start_with?(@req_enoid) #130=endOfMibView
+        if enoid_non_increasing?(var[0])
+          @state = :SUCCESS
+          break
+        end
+        @last_enoid = var[0]
         @cb.call(*var)
+        enoid = var[0]
       else
         @state = :SUCCESS
       end
     end
-    enoid = vars[-1][0]
+    enoid
   rescue StandardError
     raise SystemCallError, 'broken packet'
   end

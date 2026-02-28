@@ -4,6 +4,16 @@ require File.expand_path(File.dirname(__FILE__) + '/unittest_helper')
 require 'gri/msnmp'
 
 class TestMSNMP < Test::Unit::TestCase
+  def build_response(enc_request_id, oid, value=1)
+    vb = BER.enc_oid(oid) + BER.enc_int(value)
+    vb = "\x30" + BER.enc_len(vb.size) + vb
+    varbind = "\x30" + BER.enc_len(vb.size) + vb
+    pdu = enc_request_id + BER.enc_int(0) + BER.enc_int(0) + varbind
+    pdu = "\xA2" + BER.enc_len(pdu.size) + pdu
+    body = BER.enc_int(1) + BER.enc_str('public') + pdu
+    "\x30" + BER.enc_len(body.size) + body
+  end
+
   def test_ber_enc
     # tag 0x02 == INT
     ae "\x02\x01\x00", BER.enc(0x02, 0)
@@ -120,6 +130,39 @@ class TestMSNMP < Test::Unit::TestCase
     ae 'system', snmp.enoid2name(enoid)
     enoid = BER.enc_v_oid '1.3.6.1.2.1.1.1.0'
     ae 'sysDescr.0', snmp.enoid2name(enoid)
+  end
+
+  def test_snmp_walk_non_increasing_oid
+    snmp = SNMP.new '127.0.0.1'
+    req_enoid = BER.enc_v_oid '1.3.6.1.2.1.3.1.1.1.1.1'
+    results = []
+    snmp.walk_start(req_enoid) {|*v| results << v}
+
+    snmp.make_req(:GETNEXT_REQ, req_enoid)
+    oid1 = '1.3.6.1.2.1.3.1.1.1.1.1.192.168.30.101'
+    msg1 = build_response(snmp.instance_eval('@enc_request_id'), oid1)
+    next_arg = snmp.recv_msg(msg1)
+
+    ae 1, results.size
+    ae BER.enc_v_oid(oid1), next_arg
+    ae :GETNEXT_REQ, snmp.state
+
+    snmp.make_req(:GETNEXT_REQ, next_arg)
+    oid2 = '1.3.6.1.2.1.3.1.1.1.1.1.192.168.30.100'
+    msg2 = build_response(snmp.instance_eval('@enc_request_id'), oid2)
+    next_arg2 = snmp.recv_msg(msg2)
+
+    ae :SUCCESS, snmp.state
+    ae nil, next_arg2
+    ae 1, results.size
+  end
+
+  def test_snmp_walk_start_uses_getnext_when_bulk_unavailable
+    snmp = SNMP.new '127.0.0.1'
+    snmp.version = '2c'
+    snmp.bulk_unavailable = true
+    snmp.walk_start(BER.enc_v_oid('1.3.6.1.2.1.1')) {}
+    ae :GETNEXT_REQ, snmp.state
   end
 
   def test_c64

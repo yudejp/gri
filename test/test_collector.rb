@@ -67,6 +67,28 @@ class TestCollector < Test::Unit::TestCase
     ae '_eth0', eth0['_key']
     ae 1000000000, eth0['ifSpeed']
   end
+
+  def test_snmp_collector_retry_fallback_getbulk_to_getnext
+    c = Collector.create('snmp', 'testhost', {}) {|records|}
+    snmp = MockSNMP.new 'testhost'
+    snmp.connect
+    c.instance_eval {
+      @loop = MockLoop.new
+      @snmp = snmp
+      @buffers = []
+      @tout = 5
+      @retry_count = 3
+      @preq = [:GETBULK_REQ, BER.enc_v_oid('1.3.6.1.2.1.1')]
+    }
+    snmp.state = :GETBULK_REQ
+
+    c.retry
+
+    ae :GETNEXT_REQ, snmp.state
+    assert !c.instance_eval('@buffers').empty?
+    ae 0, c.instance_eval('@retry_count')
+    ae true, snmp.bulk_unavailable
+  end
 end
 
 end

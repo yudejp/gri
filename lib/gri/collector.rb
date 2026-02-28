@@ -296,6 +296,21 @@ module GRI
 
     def retry
       if (@retry_count += 1) > 3
+        if @preq and @snmp.state == :GETBULK_REQ
+          Log.warn "#{host}: fallback GETBULK to GETNEXT"
+          @snmp.bulk_unavailable = true if @snmp.respond_to?(:bulk_unavailable=)
+          @snmp.state = :GETNEXT_REQ
+          @retry_count = 0
+          if (s = @snmp.make_req(@snmp.state, @preq.last))
+            @buffers.push s
+            loop.watch @snmp.sock, :w, @tout, self
+          else
+            @loop.detach self
+            @on_error.call if @on_error
+            Log.error "#{host}: cannot fallback to GETNEXT"
+          end
+          return
+        end
         @loop.detach self
         @on_error.call if @on_error
         Log.error "#{host}: error"
