@@ -60,6 +60,20 @@ class TestList < Test::Unit::TestCase
     ae 2, res.values.first.size
     ae '', res.values.first.first.first
   end
+
+  def test_format_rowstr_windows_firm
+    now = Time.now.to_i
+    sysinfo = {
+      '_mtime' => now,
+      '_firm' => 'Intel64',
+      '_ver' => '6.3',
+      'sysLocation' => 'test',
+      'sysDescr' => 'Hardware: Intel64 Family 6 Model 42 Stepping 7 AT/AT COMPATIBLE - Software: Windows Version 6.3 (Build 19045 Multiprocessor Free)'
+    }
+
+    row = @list.format_rowstr('host1', sysinfo)
+    assert_match /Windows/, row
+  end
 end
 
 end

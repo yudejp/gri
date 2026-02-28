@@ -143,7 +143,12 @@ module GRI
         when 'L'
           s = form % h(sysinfo['sysLocation'].to_s)
         when 'M'
-          s = form % h(sysinfo['_firm'].to_s)
+          firm = if sysinfo['sysDescr'].to_s =~ /windows/i
+                   'Windows'
+                 else
+                   sysinfo['_firm'].to_s
+                 end
+          s = form % h(firm)
         when 'N'
           s = form % h(sysinfo['sysName'].to_s)
         when 'S'
