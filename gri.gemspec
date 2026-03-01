@@ -15,5 +15,6 @@ Gem::Specification.new do |s|
   s.require_paths = ["lib"]
 
   s.add_development_dependency "msgpack"
+  s.add_development_dependency "test-unit"
   s.add_runtime_dependency "rack"
 end

@@ -8,7 +8,10 @@ GEM
   remote: https://rubygems.org/
   specs:
     msgpack (1.8.0)
+    power_assert (3.0.1)
     rack (3.2.5)
+    test-unit (3.7.7)
+      power_assert
 
 PLATFORMS
   x86_64-linux-gnu
@@ -16,6 +19,7 @@ PLATFORMS
 DEPENDENCIES
   gri!
   msgpack
+  test-unit
 
 BUNDLED WITH
    2.4.20
