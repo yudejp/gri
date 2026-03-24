@@ -169,7 +169,7 @@ module GRI
 <table class="table ds" width="100%">
 <% for row in format_data_list dir, data_name, data_hash[data_name] -%>
   <tr>
-    <%= row.join('') %>
+    <%= row.map {|cell| to_utf8(cell)}.join('') %>
   </tr>
 <% end -%>
 </table>

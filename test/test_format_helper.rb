@@ -40,6 +40,18 @@ class TestFormatHelper < Test::Unit::TestCase
     ae '<td colspan=2>item</td>', td('item', :colspan=>2)
   end
 
+  def test_format_helper_h_binary_to_utf8
+    s = h("\xE3\x81".b)
+    ae Encoding::UTF_8, s.encoding
+    assert s.valid_encoding?
+  end
+
+  def test_format_helper_td_binary_to_utf8
+    s = td("\xE3\x81".b)
+    ae Encoding::UTF_8, s.encoding
+    assert s.valid_encoding?
+  end
+
   def test_format_helper_mk_tag
     ae '<a href="&#x2F;">top</a>', mk_tag('a', {:href=>'/'}, 'top')
   end

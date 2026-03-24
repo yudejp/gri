@@ -10,14 +10,14 @@ module GRI
     def h obj
       case obj
       when String
-        Rack::Utils.escape_html obj
+        Rack::Utils.escape_html to_utf8(obj)
       else
-        Rack::Utils.escape_html obj.inspect
+        Rack::Utils.escape_html to_utf8(obj.inspect)
       end
     end
 
     def escape_once s
-      s.to_s.gsub(HTML_ESCAPE_ONCE_REGEXP) {HTML_ESCAPE[$&]}
+      to_utf8(s).gsub(HTML_ESCAPE_ONCE_REGEXP) {HTML_ESCAPE[$&]}
     end
 
     def u str
@@ -44,6 +44,7 @@ module GRI
       args = (Array === arg) ? arg : [arg]
       res = []
       for arg in args
+        arg = to_utf8(arg)
         s = [:class, :colspan].map {|s|
           options[s] ? "#{s}=#{options[s]}" : nil}.compact.join ' '
         res.push "<#{tag}#{s.empty? ? '' : ' '+s}>#{arg}</#{tag}>"
@@ -52,9 +53,26 @@ module GRI
     end
 
     def mk_tag tag, attrs, body=nil
+      body = to_utf8(body) if body
       "<#{tag}" + attrs.map {|k, v|
         v ? ((v == true) ? ' ' + k : " #{k}=\"#{h v}\"") : nil
       }.join('') + (body ? ">#{body}</#{tag}>" : "/>")
+    end
+
+    def to_utf8 obj
+      str = obj.to_s
+      return str if str.encoding == Encoding::UTF_8 && str.valid_encoding?
+
+      if str.encoding == Encoding::ASCII_8BIT
+        str = str.dup.force_encoding(Encoding::UTF_8)
+      end
+      return str if str.valid_encoding?
+
+      str.encode(Encoding::UTF_8,
+        :invalid => :replace, :undef => :replace, :replace => "\uFFFD")
+    rescue Encoding::UndefinedConversionError, Encoding::InvalidByteSequenceError
+      str.encode(Encoding::UTF_8,
+        :invalid => :replace, :undef => :replace, :replace => "\uFFFD")
     end
 
     def text_field name='', value=nil, size=40, maxlength=nil, cl='form-control'
