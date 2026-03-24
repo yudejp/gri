@@ -15,12 +15,12 @@ module GRI
     end
 
     def mk_page_title dirs, rs, params
-      jstr = (params['p'] == 't' or params['p'] == 'v') ? ', ' : ' + '
+      jstr = to_utf8((params['p'] == 't' or params['p'] == 'v') ? ', ' : ' + ')
       descrs = []
       headlegend = nil
 
       if (tags = params.getvar('tag'))
-        title = tags.compact.join jstr
+        title = tags.compact.map {|tag| to_utf8(tag)}.join(jstr)
         return title, title, headlegend
       end
 
@@ -31,7 +31,7 @@ module GRI
         dir, records = search_records dirs, host
         if records and (prop = get_prop records[key])
           xhost = prop[:description] ? nil : host
-          descr = (prop[:description] || prop[:name] || '?').to_s
+          descr = to_utf8((prop[:description] || prop[:name] || '?').to_s)
           url = if params['grp'].blank?
                   url_to("?r=#{rname}")
                 else
@@ -41,10 +41,10 @@ module GRI
           unless headlegend or params['grp']
             ub = prop[:ub]
             if descr or ub
-              name = prop[:name].to_s
+              name = to_utf8(prop[:name].to_s)
               url = url_to("#{host}")
               headlegend = "<a href=\"#{h url}\">#{h host}</a>"
-              headlegend << ' ' + name if descr
+              headlegend << ' ' + h(name) if descr
               #headlegend << ", MAX: #{to_scalestr ub, 1000}"
             end
           end
@@ -66,7 +66,8 @@ module GRI
         end
       }.join(jstr)
 
-      return html_title, body_title, headlegend
+      return to_utf8(html_title), to_utf8(body_title),
+        (headlegend ? to_utf8(headlegend) : nil)
     end
 
     def mk_param_str stime, etime, rs, ds, params
@@ -202,9 +203,9 @@ module GRI
       ['Singapore', 'Singapore']]
     def template
       <<'EOS'
-<span class="large"><%= body_title %></span><br/>
+<span class="large"><%= to_utf8(body_title) %></span><br/>
 <% if params['z'] != 'll' and rs.size == 1 and headlegend and headlegend.size > 0 -%>
-<span class="small"><%= headlegend %></span><br/>
+<span class="small"><%= to_utf8(headlegend) %></span><br/>
 <% end -%>
 <br/>
 

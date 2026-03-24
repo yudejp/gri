@@ -54,6 +54,24 @@ class TestPage < Test::Unit::TestCase
     ae 1380639600, etime.to_i
     ae 'testhost__eth0', params['r']
   end
+
+  def test_page_mk_page_title_binary_name_to_utf8
+    page = Page.new
+    def page.search_records(_dirs, _host)
+      [nil, {'_eth0' => {}}]
+    end
+    def page.get_prop(_record)
+      {:name => "\xE3\x81".b, :description => nil, :ub => 1}
+    end
+
+    html_title, body_title, headlegend =
+      page.mk_page_title [], ['testhost__eth0'], GParams.new
+
+    [html_title, body_title, headlegend].each do |s|
+      ae Encoding::UTF_8, s.encoding
+      assert s.valid_encoding?
+    end
+  end
 end
 
 end
