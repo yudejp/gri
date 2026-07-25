@@ -1,8 +1,9 @@
 require 'gri/ldb'
+require 'gri/blank'
 
 module GRI
   class Trad
-    DATA_NAME_RE = /\A[-A-Za-z0-9.]+\z/
+    DATA_NAME_RE = /\A[-A-Za-z0-9.]*\z/
     MAX_QUERY_STRING_SIZE = 8192
     MAX_PARAM_COUNT = 200
     MAX_KEY_SIZE = 128

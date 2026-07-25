@@ -60,7 +60,8 @@ require 'gri/plugin/suppress_veth'
   end
 
   def test_plugin_suppress_veth_host_specific_interface
-    proc = GRI::DEFS.get_specs('interfaces')[:ignore?]
+    # interfaces は :cat=>'' のため get_specs('') で参照
+    proc = GRI::DEFS.get_specs('')[:ignore?]
 
     refute proc.call({'_host'=>'sdj1gw1.sdj1.yude.jp', 'ifDescr'=>'LAN1/5'})
     assert proc.call({'_host'=>'sdj1gw1.sdj1.yude.jp', 'ifDescr'=>'LAN1/6'})

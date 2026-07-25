@@ -173,9 +173,10 @@ module GRI
 
     def mk_update_str data
       data.map {|item|
-        if item =~ /\A0x[\da-f]+\z/i
+        s = item.to_s
+        if s =~ /\A0x[\da-f]+\z/i
           Integer(item)
-        elsif item == '' or item == nil or
+        elsif s == '' or item == nil or
             (item.kind_of?(Float) and not(item.finite?)) or
             (item.kind_of?(String) and item !~ /\A[-+e\.\d]+$/i)
           'U'
