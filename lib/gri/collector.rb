@@ -27,6 +27,8 @@ module GRI
       @cb = cb
       @buffers = []
       @results = []
+      @detect_results = []
+      @detect_cb = nil
       @on_error = nil
       @on_retry = nil
       on_init
@@ -67,8 +69,43 @@ module GRI
                                  oid = SNMP::OIDS[n] + '.0'
                                  SNMP.add_oid n + '.0', oid
                                  oid})
+    HC_CACHE_DEFAULT_INTERVAL = 86400
+    @@hc_cache = {}
 
     def sync?; false; end
+
+    def detect_hc host
+      cached = @@hc_cache[host]
+      interval = (options['hc-recheck-interval'] || HC_CACHE_DEFAULT_INTERVAL).to_i
+      if cached && (Time.now - cached[:checked_at]) < interval
+        return cached[:support]
+      end
+
+      hc_oid_names = ['ifHCInOctets', 'ifHCOutOctets']
+      enoids = hc_oid_names.map {|n| BER.enc_v_oid(SNMP::OIDS[n])}
+
+      @hc_detected = false
+      detect_walk_next(enoids) {|supported|
+        @@hc_cache[host] = {support: supported, checked_at: Time.now}
+        @hc_detected = true
+      }
+      nil
+    end
+
+    def detect_walk_next enoids, &cb
+      if enoids.empty?
+        cb.call false
+        return
+      end
+      enoid = enoids.shift
+      walk(enoid, detect: true) {|results|
+        if results && !results.empty?
+          cb.call true
+        else
+          detect_walk_next(enoids, &cb)
+        end
+      }
+    end
 
     def on_attach
       now = Time.now
@@ -104,6 +141,18 @@ module GRI
 
         @snmp.version = vendor.options['ver'] if vendor.options['ver']
         punits = vendor.get_punits
+
+        if vendor.options['ifMIB']
+          cached = @@hc_cache[host]
+          interval = (options['hc-recheck-interval'] || HC_CACHE_DEFAULT_INTERVAL).to_i
+          hc_known = cached && (Time.now - cached[:checked_at]) < interval
+          if hc_known && !cached[:support]
+            punits.reject! {|pu| pu.name == 'ifMIB'}
+            Log.info "#{host}: HC counters not supported (cached), using 32-bit" if $debug
+          else
+            detect_hc(host) unless hc_known
+          end
+        end
         punits_d = punits.dup
         @workhash = punits.inject({}) {|h, pu| h[pu.cat] = {}; h}
         poll1(punits) {
@@ -255,12 +304,24 @@ module GRI
       end
     end
 
-    def walk enoid, &cb
-      @results.clear
+    def walk enoid, cb=nil, detect: false, &b
+      cb ||= b
+      if detect
+        @detect_results.clear
+        @detect_cb = cb
+      else
+        @results.clear
+        @poll_cb = cb
+      end
       @retry_count = 0
-      @poll_cb = cb
       @snmp.connect unless @snmp.sock
-      @snmp.walk_start(enoid) {|*res| @results.push res}
+      @snmp.walk_start(enoid) {|*res|
+        if detect
+          @detect_results.push res
+        else
+          @results.push res
+        end
+      }
       send_req enoid
     rescue SocketError => e
       @loop.detach self
@@ -351,7 +412,15 @@ module GRI
       end
       if @snmp.state == :SUCCESS
         @preq = nil
-        @poll_cb.call @results
+        if @detect_cb
+          dc = @detect_cb
+          @detect_cb = nil
+          dr = @detect_results.dup
+          @detect_results.clear
+          dc.call dr
+        else
+          @poll_cb.call @results
+        end
       elsif @snmp.state != :IDLE
         send_req arg if arg
       end
