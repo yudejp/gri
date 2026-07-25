@@ -41,7 +41,7 @@ jobs:
         with:
           images: ${{ env.DOCKER_REGISTRY_NAME }}/${{ env.DOCKER_IMAGE_NAME }}
           tags: |
-            type=sha
+            type=sha,prefix=
             type=ref,event=branch
             type=semver,pattern={{version}}
 
