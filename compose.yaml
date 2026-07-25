@@ -3,7 +3,7 @@ services:
     hostname: gri
     build:
       context: .
-    image: ghcr.io/yudejp/gri:master
+    image: ghcr.io/yudejp/gri:${GRI_IMAGE_TAG:-latest}
     container_name: gri
     restart: always
     environment:
