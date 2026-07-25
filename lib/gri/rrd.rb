@@ -393,10 +393,17 @@ class RRD
     st = {}
     n = 0
 
+    # lower_bound=0 の場合: 負レートを絶対値に変換して線の途切れを防止
+    # (カウンタリセット時の負値を正値として表示)
+    # lower_bound≠0 の場合: 従来通り負値を UNKN に変換
     limitstr = if lower_bound and upper_bound and (lower_bound != upper_bound)
 		 ",#{lower_bound},#{upper_bound},LIMIT"
                elsif lower_bound
-                 ",DUP,#{lower_bound},GE,EXC,UNKN,IF"
+		 if lower_bound == 0
+		   ',ABS'
+		 else
+		   ",DUP,#{lower_bound},GE,EXC,UNKN,IF"
+		 end
 	       else
 		 ''
 	       end

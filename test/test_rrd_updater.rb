@@ -81,7 +81,7 @@ class TestRRDUpdater < Test::Unit::TestCase
     ds_specs = specs[:ds]
     ae 'ifInOctets,inoctet,DERIVE,MAX,AREA,#90f090,in,8', ds_specs.first
     ds_args, record_keys = updater.mk_ds_args ds_specs, 300
-    ae 'DS:inoctet:DERIVE:750:U:U', ds_args.first
+    ae 'DS:inoctet:DERIVE:900:U:U', ds_args.first
     ae 'ifInOctets', record_keys.first
   end
 

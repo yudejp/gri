@@ -73,7 +73,15 @@ module GRI
       n = 0
       for spec_line in ds_specs
         key, dsname, dst = spec_line.split /,/
-        heartbeat = interval * ((dst == 'DERIVE' or dst == 'COUNTER') ? 2.5 : 2)
+        # DERIVE/COUNTER: heartbeat ファクタを gri.conf の heartbeat-factor から取得
+        # (デフォルト 3.0)。GAUGE 等は従来通り 2 倍。
+        if dst == 'DERIVE' or dst == 'COUNTER'
+          factor_str = @config.getvar('heartbeat-factor')&.first
+          heartbeat_factor = factor_str ? factor_str.to_f : 3.0
+        else
+          heartbeat_factor = 2
+        end
+        heartbeat = interval * heartbeat_factor
         key = key[1..-1].intern if key[0] == ?:
         record_keys.push key
         ds_args.push "DS:#{dsname}:#{dst}:#{heartbeat.to_i}:U:U"
