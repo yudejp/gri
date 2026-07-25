@@ -8,7 +8,7 @@ class TestFormatHelper < Test::Unit::TestCase
   include FormatHelper
 
   def test_format_helper_h
-    ae "&lt;&#x2F;br&gt;", h('</br>')
+    ae "&lt;/br&gt;", h('</br>')
     ae "[nil]", h([nil])
   end
 
@@ -53,7 +53,7 @@ class TestFormatHelper < Test::Unit::TestCase
   end
 
   def test_format_helper_mk_tag
-    ae '<a href="&#x2F;">top</a>', mk_tag('a', {:href=>'/'}, 'top')
+    ae '<a href="/">top</a>', mk_tag('a', {:href=>'/'}, 'top')
   end
 
   def test_format_helper_text_field

@@ -10,9 +10,10 @@ module GRI
     def h obj
       case obj
       when String
-        Rack::Utils.escape_html to_utf8(obj)
+        # Rack 3.x は / も &#x2F; にエスケープするが、HTML で不要なため元に戻す
+        Rack::Utils.escape_html(to_utf8(obj)).gsub('&#x2F;', '/')
       else
-        Rack::Utils.escape_html to_utf8(obj.inspect)
+        Rack::Utils.escape_html(to_utf8(obj.inspect)).gsub('&#x2F;', '/')
       end
     end
 
