@@ -1,4 +1,5 @@
 require 'gri/ltsv'
+require 'gri/utils'
 
 module GRI
   class Writer
@@ -47,6 +48,7 @@ module GRI
       hrecords = {}
       updaters = {}
       hosts = {}
+      previous_records = {}
       for record in records
         if (host = record['_host']) and (key = record['_key'])
           hosts[host] = true
@@ -55,8 +57,8 @@ module GRI
           else
             data_name, index = key.scan(/\A([^_\d]*)(_?.*)/).first
             basename = "#{host}_#{key}"
+            hdir = "#{@gra_dir}/#{host}"
             unless (updater = updaters[basename])
-              hdir = "#{@gra_dir}/#{host}"
               FileUtils.mkdir_p hdir unless File.directory? hdir
               opts = {:data_name=>data_name, :gra_dir=>@gra_dir,
                 :host=>host, :key=>key,
@@ -70,7 +72,16 @@ module GRI
               updater = updaters[basename] = RRDUpdater.new(opts)
             end
             time = (record['_time'] || now).to_i
-            updater.update time, record
+            update_record = record
+            if data_name.empty?
+              old_records = previous_records.fetch(host) do
+                previous_records[host] = Utils.load_records(hdir) || {}
+              end
+              rrd_path = "#{hdir}/#{basename}.rrd"
+              update_record = prepare_interface_record(record, old_records[key],
+                File.exist?(rrd_path))
+            end
+            updater.update time, update_record
             key = updater.key
           end
           (r = record.dup)['_key'] = key
@@ -81,12 +92,26 @@ module GRI
       hrecords.each {|host, h|
         path = "#{@gra_dir}/#{host}/.records.txt"
         FileUtils.mkdir_p File.dirname(path) unless File.exist? path
-        Utils.update_ltsv_file path, '_key', h
+        Utils.update_ltsv_file path, '_key', h, previous_records[host]
       }
       updaters.each {|k, u| u.close}
       hosts.each {|host,|
         @sysinfos[host] ||= {'_host'=>host.dup, '_time'=>now, '_mtime'=>now}
       }
+    end
+
+    def prepare_interface_record record, previous, existing_rrd
+      update_record = record.dup
+      ['In', 'Out'].each do |direction|
+        source_key = "_#{direction.downcase}octet_source"
+        source = record["ifHC#{direction}Octets"] ? 'hc' : '32'
+        record[source_key] = source
+        if existing_rrd && source == 'hc' &&
+            (!previous || previous[source_key] != 'hc')
+          update_record["if#{direction}Octets"] = nil
+        end
+      end
+      update_record
     end
 
     def finalize

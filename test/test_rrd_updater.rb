@@ -1,6 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/unittest_helper')
 
 require 'fileutils'
+require 'tmpdir'
 require 'gri/updater'
 require 'gri/utils'
 
@@ -123,16 +124,16 @@ class TestRRDUpdater < Test::Unit::TestCase
   def test_update_records_file
     test_dir = File.expand_path(File.dirname(__FILE__))
     org_path = test_dir + '/root/gra/testhost/.records.txt'
-    path = '/var/tmp/.records.txt'
-    FileUtils.cp org_path, path
+    Dir.mktmpdir('gri-records') do |dir|
+      path = File.join(dir, '.records.txt')
+      FileUtils.cp org_path, path
 
-    h = {'new'=>{'_key'=>'new', 'a'=>1}}
-    Utils.update_ltsv_file path, '_key', h
+      h = {'new'=>{'_key'=>'new', 'a'=>1}}
+      Utils.update_ltsv_file path, '_key', h
 
-    rs = GRI::Utils.load_records File.dirname(path)
-    ae '1', rs['new']['a']
-
-    File.unlink path
+      rs = GRI::Utils.load_records dir
+      ae '1', rs['new']['a']
+    end
   end
 end
 

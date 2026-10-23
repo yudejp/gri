@@ -36,15 +36,17 @@ module GRI
       h
     end
 
-    def update_ltsv_file path, key, other
-      if File.exist? path
+    def update_ltsv_file path, key, other, existing=nil
+      if existing
+        nvalues = existing
+      elsif File.exist? path
         values = LTSV.load_from_file path
         nvalues = values.inject({}) {|h, v| h[v[key]] = v; h}
-        for k in other.keys
-          nvalues[k] ? nvalues[k].merge!(other[k]) : (nvalues[k] = other[k])
-        end
       else
-        nvalues = other
+        nvalues = {}
+      end
+      for k in other.keys
+        nvalues[k] ? nvalues[k].merge!(other[k]) : (nvalues[k] = other[k])
       end
       LTSV.dump_to_file nvalues, path
     end

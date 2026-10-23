@@ -1,5 +1,7 @@
 require 'open3'
 require 'thread'
+require 'tempfile'
+require 'gri/log'
 
 class RRDError < Exception; end
 
@@ -379,12 +381,11 @@ class RRD
   end
 
   def graphgen stime, etime, args
-    tmp_file = "/tmp/rrdtmp#{$$}"
-    img = nil
-    graph tmp_file, stime, etime, args
-    open(tmp_file) {|f| img = f.read}
-    File.unlink tmp_file
-    img
+    Tempfile.create(['gri-graph-', '.png']) do |file|
+      graph file.path, stime, etime, args
+      file.binmode
+      file.read
+    end
   end
 
   def self.defstr rrdpaths, ds, cf, cname, line, color, legend,
@@ -393,14 +394,13 @@ class RRD
     st = {}
     n = 0
 
-    # lower_bound=0 の場合: 負レートを絶対値に変換して線の途切れを防止
-    # (カウンタリセット時の負値を正値として表示)
-    # lower_bound≠0 の場合: 従来通り負値を UNKN に変換
+    # A negative DERIVE rate means a counter reset or an uncorrected wrap.
+    # Its magnitude is not traffic and must not be plotted as a positive rate.
     limitstr = if lower_bound and upper_bound and (lower_bound != upper_bound)
 		 ",#{lower_bound},#{upper_bound},LIMIT"
                elsif lower_bound
 		 if lower_bound == 0
-		   ',ABS'
+		   ',DUP,0,GE,EXC,UNKN,IF'
 		 else
 		   ",DUP,#{lower_bound},GE,EXC,UNKN,IF"
 		 end

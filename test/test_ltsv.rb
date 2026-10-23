@@ -1,6 +1,7 @@
 require File.expand_path(File.dirname(__FILE__) + '/unittest_helper')
 
 require 'gri/ltsv'
+require 'tmpdir'
 
 module GRI
 
@@ -18,12 +19,13 @@ class TestLTSV < Test::Unit::TestCase
   end
 
   def test_ltsv_dump_to_file
-    path = '/var/tmp/ltsv_test.txt'
-    values = [{'a'=>'1', 'b'=>'2'}, {'x'=>'10', 'y'=>'20'}]
-    LTSV.dump_to_file values, path
-    vs = LTSV.load_from_file path
-    ae values, vs
-    File.unlink path
+    Dir.mktmpdir('gri-ltsv') do |dir|
+      path = File.join(dir, 'ltsv_test.txt')
+      values = [{'a'=>'1', 'b'=>'2'}, {'x'=>'10', 'y'=>'20'}]
+      LTSV.dump_to_file values, path
+      vs = LTSV.load_from_file path
+      ae values, vs
+    end
   end
 
   def test_parse_string

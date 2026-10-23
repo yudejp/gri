@@ -18,6 +18,20 @@ class TestGraph < Test::Unit::TestCase
     ae 1000000000, res[1]
   end
 
+  def test_host_records_are_loaded_once_per_graph_request
+    graph = Graph.new :dirs=>[@root_dir + '/gra']
+    loads = 0
+    graph.define_singleton_method(:search_records) do |dirs, host|
+      loads += 1
+      super(dirs, host)
+    end
+    graph.get_rrdpaths_and_ub ['testhost__eth0', 'testhost__eth0']
+    params = GParams.new
+    params.update 'p'=>'t'
+    graph.mk_graph_title ['testhost__eth0'], params
+    ae 1, loads
+  end
+
   def test_graph_mk_graph_title
     gra_dirs = [@root_dir + '/gra']
     rs = ['testhost__eth0']

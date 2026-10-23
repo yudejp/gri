@@ -3,6 +3,7 @@ require File.expand_path(File.dirname(__FILE__) + '/unittest_helper')
 require 'gri/builtindefs'
 require 'gri/msnmp'
 require 'gri/vendor'
+require 'gri/polling_unit'
 require 'gri/plugin/ucdavis'
 require 'gri/plugin/netsnmp'
 
@@ -34,6 +35,20 @@ class TestVendor < Test::Unit::TestCase
 
     vendor = Vendor.check sysinfo, 'interfaces'=>false
     assert !vendor.options['interfaces']
+    assert !vendor.options['ifMIB']
+  end
+
+  def test_high_capacity_polling_options
+    sysinfo = {'sysDescr'=>'unknown device'}
+    vendor = Vendor.check sysinfo, 'ver'=>'2c'
+    assert vendor.options['ifMIB']
+    assert vendor.get_punits.any? {|unit| unit.name == 'ifMIB'}
+
+    vendor = Vendor.check sysinfo, 'ver'=>'2c', 'ifMIB'=>false
+    assert !vendor.options['ifMIB']
+
+    vendor = Vendor.check sysinfo, 'ver'=>'1', 'ifMIB'=>true
+    assert !vendor.options['ifMIB']
   end
 end
 

@@ -46,6 +46,21 @@ http://localhost:9292/
 
 Note: the Ruby 3.1+ LTSV frozen-string workaround is already integrated in GRI. External startup patches via `RUBYOPT` are no longer required.
 
+### Traffic counter accuracy
+
+Use SNMPv2c and a device that exposes `ifHCInOctets` and `ifHCOutOctets` for
+high-speed interfaces. GRI polls these 64-bit counters automatically with
+SNMPv2c, unless `no-ifMIB` is set. SNMPv1 and devices without those counters
+fall back to 32-bit octet counters.
+
+At a 300-second polling interval, a 32-bit octet counter can wrap within one
+interval above about 114.5 Mbps. Multiple wraps cannot be reconstructed from
+the samples, so those rates may be inaccurate without 64-bit counters. A
+counter reset or an observed negative delta is shown as missing data rather
+than traffic. When an existing RRD switches from 32-bit to 64-bit counters,
+GRI skips the transition sample to avoid a false spike. Previously recorded
+incorrect rates cannot be recovered from the RRD data alone.
+
 ### Traditional CGI setup
 
 #### Requirements

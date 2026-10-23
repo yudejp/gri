@@ -1,4 +1,5 @@
 require 'gri/builtindefs'
+require 'rack/utils'
 require 'gri/blank'
 require 'gri/request'
 require 'gri/utils'
@@ -21,16 +22,21 @@ module GRI
       @options = options
       @hprops = {}
       @hosthash = {}
+      @host_records = {}
+    end
+
+    def host_records host
+      return @host_records[host] if @host_records.key?(host)
+      @host_records[host] = search_records(@options[:dirs], host)
     end
 
     def get_rrdpaths_and_ub rnames
       total_ub = 0
       rrdpaths = []
-      dirs = @options[:dirs]
       for rname in rnames
         host, key = rname.split('_', 2)
         @hosthash[host] = true
-        dir, h = search_records dirs, host
+        dir, h = host_records host
         if h
           @hprops[host] ||= h
           if h[key]
@@ -48,7 +54,7 @@ module GRI
       if params['p'] == 't'
         r, = rs
         host, key = r.split('_', 2)
-        dir, h = search_records @options[:dirs], host
+        dir, h = host_records host
         if h
           @hprops[host] ||= h
           if h[key]
@@ -67,7 +73,7 @@ module GRI
       dir = File.dirname path
       label = File.basename path, '.rrd'
       host, key = label.split('_', 2)
-      h = (@hprops[host] ||= (load_records "#{dir}/#{host}"))
+      h = (@hprops[host] ||= load_records(dir))
       if h and h[key]
         prop = get_prop h[key]
         name = prop[:legend] || prop[:name] || key

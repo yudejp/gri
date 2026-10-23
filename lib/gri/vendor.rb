@@ -34,6 +34,8 @@ module GRI
       @options = {'ver'=>'1', 'interfaces'=>true, 'ipaddr'=>true}
       @options.merge! vdefs[:options] if vdefs[:options]
       @options.merge! options if options
+      @options['ifMIB'] = @options['interfaces'] &&
+        @options['ver'] == '2c' && @options['ifMIB'] != false
       class <<@options
         def set_unless_defined k, v=true
           self[k] = v unless self.has_key? k
