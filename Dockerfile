@@ -1,4 +1,4 @@
-FROM ruby:3.1-slim  
+FROM ghcr.io/ruby/ruby:3.4.12
 
 RUN apt-get update && apt-get install -y --no-install-recommends git rrdtool ca-certificates && \
     rm -rf /var/lib/apt/lists/*  
@@ -29,4 +29,4 @@ EXPOSE 9292
 
 USER gri  
 
-CMD while true; do /usr/local/bundle/bin/gri; sleep 60; done
+CMD while true; do gri; sleep 60; done
