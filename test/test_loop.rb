@@ -30,6 +30,16 @@ class TestLoop < Test::Unit::TestCase
     assert !@loop.has_active_watchers?
     @loop.run
   end
+
+  def test_watch_replaces_previous_direction_and_duplicate
+    io = Object.new
+    handler = Object.new
+    @loop.watch io, :w, 5, handler
+    @loop.watch io, :r, 5, handler
+    @loop.watch io, :r, 5, handler
+    ae [io], @loop.instance_variable_get(:@rs)
+    ae [], @loop.instance_variable_get(:@ws)
+  end
 end
 
 end

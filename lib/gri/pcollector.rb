@@ -98,12 +98,10 @@ module GRI
         ptargets = {basetime=>(0..targets.size-1).to_a}
       else
         intervals = {}
-        n = 0
-        for host, options in targets
+        targets.each_with_index do |(host, options), n|
           interval = (options['interval'] || default_interval).to_i
           next if interval.zero?
           (intervals[interval] ||= []).push n
-          n += 1
         end
         ptargets = {}
         et = basetime + duration

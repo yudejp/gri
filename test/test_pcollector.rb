@@ -54,6 +54,12 @@ class TestPCollector < Test::Unit::TestCase
     @app.server_loop([], {}, nil, nil)
   end
 
+  def test_disabled_interval_does_not_shift_target_indices
+    targets = [['disabled', {'interval'=>0}], ['enabled', {'interval'=>300}]]
+    ptargets = @app.get_ptargets targets, 1_800_000_000, 300
+    ae [1], ptargets[1_800_000_000]
+  end
+
   def test_pcollector_get_max_queue_size
     config = Config.new
     app = AppCollector.new config

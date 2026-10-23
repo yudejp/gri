@@ -90,6 +90,19 @@ class TestCollector < Test::Unit::TestCase
     ae true, snmp.bulk_unavailable
   end
 
+  def test_retry_replaces_unsent_datagram
+    c = Collector.create('snmp', 'testhost', {}) {|records|}
+    snmp = MockSNMP.new 'testhost'
+    c.instance_eval {
+      @loop = MockLoop.new
+      @snmp = snmp
+    }
+    c.get(SNMPCollector::SYSOIDS) {|results|}
+    ae 1, c.instance_variable_get(:@buffers).size
+    c.retry
+    ae 1, c.instance_variable_get(:@buffers).size
+  end
+
   def test_snmp_collector_retry_fallback_getbulk_immediately
     c = Collector.create('snmp', 'testhost', {}) {|records|}
     snmp = MockSNMP.new 'testhost'

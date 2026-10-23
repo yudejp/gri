@@ -288,7 +288,7 @@ module GRI
         if @retry_count > 0
           Log.debug "retry send_req, #{@buffers.size}"
         end
-        @buffers.push s
+        @buffers.replace [s]
         loop.watch @snmp.sock, :w, @tout, self
       else
         on_readable
@@ -304,7 +304,7 @@ module GRI
         @retry_count = 0
         @preq = [@snmp.state, @preq.last]
         if (s = @snmp.make_req(@snmp.state, @preq.last))
-          @buffers.push s
+          @buffers.replace [s]
           loop.watch @snmp.sock, :w, @tout, self
         else
           @loop.detach self
@@ -322,7 +322,7 @@ module GRI
         Log.warn "#{host}: retry #{@retry_count}"
         @on_retry.call if @on_retry
         if (s = @snmp.make_req(@snmp.state, @preq.last))
-          @buffers.push s
+          @buffers.replace [s]
           loop.watch @snmp.sock, :w, @tout, self
         else
           @loop.detach self

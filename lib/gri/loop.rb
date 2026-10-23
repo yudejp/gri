@@ -46,6 +46,8 @@ module GRI
       @handlers[io] = handler
       @times[io] = now
       @tos[io] = to
+      @rs.delete io
+      @ws.delete io
       case flag
       when :r
         @rs.push io
