@@ -3,6 +3,8 @@ require File.expand_path(File.dirname(__FILE__) + '/unittest_helper')
 require 'gri/config'
 require 'gri/pcollector'
 require 'mock'
+require 'tmpdir'
+require 'socket'
 
 module GRI
 
@@ -52,6 +54,52 @@ class TestPCollector < Test::Unit::TestCase
 
   def test_pcollector_server_loop
     @app.server_loop([], {}, nil, nil)
+  end
+
+  def test_parallel_run_uses_process_socket_and_preserves_other_results
+    Dir.mktmpdir('gri-parallel') do |dir|
+      begin
+        probe = UNIXServer.new File.join(dir, 'probe.sock')
+        probe.close
+      rescue Errno::EPERM
+        omit 'Unix sockets are unavailable in this sandbox'
+      end
+      config = Config.new
+      config['root-dir'] = dir
+      config['log-dir'] = dir
+      app = AppCollector.new config
+      other_result = File.join(dir, 'res.other.dump')
+      File.write(other_result, 'other run')
+      socket_path = nil
+      app.define_singleton_method(:fork_child) do |server, path, *args|
+        socket_path = path
+        []
+      end
+      app.define_singleton_method(:server_loop) do |*args|
+      end
+
+      app.run_para [], nil, Time.now.to_i, nil
+
+      assert_match %r{\A/tmp/\.gcollectsock\.#{Process.pid}\.[0-9a-f]{12}\z},
+        socket_path
+      assert File.exist?(other_result)
+      assert !File.exist?(socket_path)
+
+      app.define_singleton_method(:server_loop) do |*args|
+        raise Timeout::Error, 'collector worker did not connect'
+      end
+      assert_raise(Timeout::Error) {app.run_para [], nil, Time.now.to_i, nil}
+      assert !File.exist?(socket_path)
+      assert File.exist?(other_result)
+
+      occupied_path = File.join(dir, 'occupied.sock')
+      occupied = UNIXServer.new occupied_path
+      config['sock-path'] = occupied_path
+      assert_raise(Errno::EADDRINUSE) do
+        app.run_para [], nil, Time.now.to_i, nil
+      end
+      occupied.close
+    end
   end
 
   def test_disabled_interval_does_not_shift_target_indices

@@ -1,17 +1,19 @@
 require 'timeout'
+require 'securerandom'
 require 'gri/util_marshal'
 require 'gri/app_collector'
 
 module GRI
   class AppCollector
     def run_para targets, scheduler_class, start_time, fdh
-      sock_path = config['sock-path'] || '/tmp/.gcollectsock'
+      sock_path = config['sock-path'] ||
+        "/tmp/.gcollectsock.#{$$}.#{SecureRandom.hex(6)}"
       begin
         server_sock = UNIXServer.new sock_path
-      rescue SystemCallError
+      rescue SystemCallError => e
         puts "#{$!}: server_sock error" if $debug
-        Log.fatal "#{$!}: server_sock error"
-        return
+        Log.fatal "#{e}: server_sock error"
+        raise
       end
 
       duration = (config['duration'] || 0).to_i
@@ -25,18 +27,20 @@ module GRI
       interval = (config['interval'] || 300).to_i
       ptargets = get_ptargets targets, basetime, duration, offset, interval
       log_dir = config['log-dir'] || (config['root-dir'] + '/log')
-      Dir.glob("#{log_dir}/res.*.dump") {|path| File.unlink path} rescue nil
       max_processes = (config['max-processes'] ||
                        config['max-fork-process']).to_i
       max_processes = 30 if max_processes < 1
       nproc = [targets.size * 2 / 3 + 1, max_processes].min
       waittime = [20, duration].min
+      pids = []
+      server_error = nil
       begin
         pids = fork_child server_sock, sock_path, nproc, targets, log_dir,
           scheduler_class, fdh
         server_loop targets, ptargets, server_sock, waittime
-      rescue TimeoutError, SystemCallError
-        Log.error $!.inspect
+      rescue Timeout::Error, SystemCallError => e
+        Log.error e.inspect
+        server_error = e
       ensure
         server_sock.close
         Log.info "server_sock.close"
@@ -52,6 +56,7 @@ module GRI
           Log.error "{$!}"
         end
       }
+      raise server_error if server_error
     end
 
     def server_loop targets, ptargets, server_sock, waittime
@@ -73,7 +78,7 @@ module GRI
               sock.close
             else
               sock.close
-              raise TimeoutError, 'select timeout'
+              raise Timeout::Error, 'select timeout'
             end
             if pts.empty? and (t = pkeys.first)
               now = Time.now.to_f
