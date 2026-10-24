@@ -26,7 +26,7 @@ module GRI
       @options.each {|k, v| @config.setvar k.to_s, v}
       root_dir = @config['root-dir'] ||= Config::ROOT_PATH
 
-      log_dir = @config['log-dir'] || root_dir + '/log'
+      log_dir = @config['log-dir'] || '/tmp'
       begin
         Dir.mkdir log_dir unless File.exist? log_dir
         Log.init "#{log_dir}/#{optparser.program_name}.log",

@@ -37,8 +37,6 @@ module Log
     logger = Logger.new logdev, shift_age, shift_size
     logger.formatter = Log::Formatter.new
     logger.add Logger::INFO, '-' unless options[:no_dash]
-    logger = Logger.new logdev
-    logger.formatter = Log::Formatter.new
     logger.level = {'fatal'=>Logger::FATAL, 'error'=>Logger::ERROR,
       'warn'=>Logger::WARN, 'info'=>Logger::INFO, 'debug'=>Logger::DEBUG,
     }[(options[:log_level] || '').downcase] || Logger::INFO
