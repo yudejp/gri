@@ -108,6 +108,26 @@ class TestPCollector < Test::Unit::TestCase
     ae [1], ptargets[1_800_000_000]
   end
 
+  def test_default_result_directory_is_writable
+    config = Config.new
+    config['root-dir'] = '/usr/local/gri'
+    app = AppCollector.new config
+    result_dir = nil
+    app.define_singleton_method(:fork_child) do |server, path, count, targets,
+        log_dir, scheduler_class, fdh|
+      result_dir = log_dir
+      []
+    end
+    app.define_singleton_method(:server_loop) do |*args|
+    end
+    begin
+      app.run_para [], nil, Time.now.to_i, nil
+    rescue Errno::EPERM
+      omit 'Unix sockets are unavailable in this sandbox'
+    end
+    ae '/tmp', result_dir
+  end
+
   def test_pcollector_get_max_queue_size
     config = Config.new
     app = AppCollector.new config

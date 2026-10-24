@@ -26,7 +26,7 @@ module GRI
       end
       interval = (config['interval'] || 300).to_i
       ptargets = get_ptargets targets, basetime, duration, offset, interval
-      log_dir = config['log-dir'] || (config['root-dir'] + '/log')
+      log_dir = config['log-dir'] || '/tmp'
       max_processes = (config['max-processes'] ||
                        config['max-fork-process']).to_i
       max_processes = 30 if max_processes < 1
